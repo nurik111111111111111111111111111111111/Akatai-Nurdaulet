@@ -438,11 +438,6 @@ def run_server():
 ```
 Создаём сервер на localhost порт 8000 и запускаем его.
 
-**Пример запроса:**
-```
-http://127.0.0.1:8000/report?file=data.csv&cols=price,amount&cat=category
-```
-
 ---
 
 ## Как запустить
@@ -462,10 +457,46 @@ python task13.py
 Создаст файлы: `histogram.png`, `line_plot.png`, `top_categories.png`
 
 ### Task 14 (HTTP-сервер)
+
+1. Запустите сервер в одном терминале:
 ```bash
 python task14.py
 ```
-Откройте в браузере: `http://127.0.0.1:8000/report?file=data.csv&cols=col1,col2&cat=category`
+Вы увидите: `Запуск сервера http://127.0.0.1:8000/report?...`
+
+2. Откройте другой терминал и сделайте запрос, или откройте в браузере:
+
+**Примеры запросов:**
+
+Анализ колонок `age` и `score` (числовые):
+```
+http://127.0.0.1:8000/report?file=data.csv&cols=age,score&cat=group
+```
+
+Анализ колонок `id` и `age` с категорией `city`:
+```
+http://127.0.0.1:8000/report?file=data.csv&cols=id,age&cat=city
+```
+
+**Параметры URL:**
+- `file` — имя CSV-файла (обязательно)
+- `cols` — две колонки для анализа через запятую (обязательно)
+- `cat` — категориальная колонка (опционально)
+
+**Выход (JSON):**
+```json
+{
+  "n_rows": 100,
+  "missing": {"age": 2, "score": 0, ...},
+  "describe": {
+    "age": {"count": 98, "mean": 35.5, "min": 18, "25%": 25, "50%": 35, "75%": 45, "max": 65},
+    "score": {"count": 100, "mean": 75.2, ...}
+  },
+  "top_categories": [["group_A", 30], ["group_B", 25], ...]
+}
+```
+
+**Остановить сервер:** нажмите `Ctrl+C` в терминале
 
 ---
 
