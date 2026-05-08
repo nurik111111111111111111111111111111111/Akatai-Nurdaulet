@@ -1,508 +1,383 @@
-# Akatai-Nurdaulet — Анализ CSV данных
+# Мини-отчёт по таблице
 
-Проект содержит 6 задач для анализа данных в CSV-файле. Каждая задача в отдельном файле с собственным классом.
+Проект читает файл `data.csv`, анализирует таблицу и показывает результат через FastAPI.
+
+## Запуск
+
+```bash
+python "22. Мини-отчёт по таблице.py"
+```
+
+Документация FastAPI:
+
+```text
+http://127.0.0.1:8001/docs
+```
+
+Главный отчёт:
+
+```text
+http://127.0.0.1:8001/mini-report?file=data.csv&col1=age&col2=score&cat=city
+```
 
 ---
 
 ## Общая структура
 
-Все файлы используют похожую структуру:
-1. **Импорт библиотек** — загружаем инструменты для работы
-2. **Создание класса** — у каждой задачи свой класс
-3. **Конструктор `__init__`** — инициализация и загрузка данных
-4. **Метод `load_data()`** — чтение CSV-файла
-5. **Вспомогательные методы** — обработка данных
-6. **Метод `run()`** — запуск основной логики
-7. **Блок `if __name__ == "__main__"`** — автоматический запуск
+В проекте есть отдельные файлы для заданий:
+
+1. `task9.py` — числовые колонки и суммы.
+2. `task10.py` — `min`, `max`, `mean`.
+3. `task11.py` — `describe()` и пропуски.
+4. `task12.py` — топ-5 категорий и квартильные границы.
+5. `task13.py` — PNG-графики.
+6. `task14.py` — JSON-отчёт.
+7. `22. Мини-отчёт по таблице.py` — FastAPI-сервер.
+
+Главная идея простая:
+
+```python
+Task14("data.csv").run("age", "score", "city")
+```
+
+Мы создаём объект задания, передаём файл и получаем готовый словарь с результатом.
 
 ---
 
-## Task 9: Число строк и числовые колонки
-
-**Цель**: подсчитать строки, найти числовые колонки и вычислить суммы.
-
-### Построчное объяснение (`task9.py`)
+## Task 9: числовые колонки и суммы
 
 ```python
-import csv
+import numpy as np
+import pandas as pd
 ```
-Импортируем модуль `csv` — это встроенная библиотека Python для чтения CSV-файлов.
+
+Подключаются библиотеки.
+`pandas` читает таблицу, а `numpy` помогает считать суммы.
 
 ```python
-class Task9:
+self.df = pd.read_csv(file_name)
 ```
-Создаём класс `Task9`. Класс — это шаблон для создания объектов, который объединяет данные и методы вместе.
+
+Эта строка читает CSV-файл и превращает его в таблицу.
 
 ```python
-def __init__(self, file_name="data.csv"):
-    self.file_name = file_name  # имя CSV-файла
+self.df[col].astype(float)
 ```
-Метод `__init__` — конструктор, вызывается при создании объекта. Сохраняем имя файла в переменную `self.file_name`.
+
+Программа пробует превратить колонку в числа.
+Если получилось — колонка числовая.
 
 ```python
-    self.rows = []  # список строк из файла
+values = self.df[col].astype(float).to_numpy()
+sums[col] = float(np.nansum(values))
 ```
-Создаём пустой список `self.rows`, где будем хранить все строки из CSV.
 
-```python
-    self.cols = []  # список названий колонок
-```
-Создаём пустой список `self.cols` для названий колонок (заголовков).
-
-```python
-    self.load_data()  # читаем данные сразу при создании
-```
-Вызываем метод `load_data()` прямо в конструкторе, чтобы данные загрузились автоматически.
-
-```python
-def load_data(self):
-    with open(self.file_name, newline="", encoding="utf-8") as f:
-```
-Открываем файл в режиме чтения. `with` — специальная конструкция, которая автоматически закроет файл даже при ошибке. `newline=""` нужна для правильной работы с CSV. `encoding="utf-8"` — кодировка для русских букв.
-
-```python
-        reader = csv.DictReader(f)
-```
-`DictReader` читает CSV и преобразует каждую строку в словарь (как таблица, где ключи — это имена колонок).
-
-```python
-        self.cols = reader.fieldnames or []
-```
-Сохраняем имена колонок. `or []` — если их нет, используем пустой список.
-
-```python
-        for row in reader:
-            self.rows.append(row)
-```
-Цикл по всем строкам. Каждую строку добавляем в список `self.rows`. `append()` — метод для добавления элемента в список.
-
-```python
-def is_number(self, text):
-    try:
-        float(text)
-        return True
-    except:
-        return False
-```
-Проверяем, можно ли текст преобразовать в число. `try/except` — пробуем выполнить операцию, если ошибка — возвращаем `False`. `float()` преобразует строку в число.
-
-```python
-def numeric_columns(self):
-    numeric = []
-```
-Начинаем собирать список числовых колонок.
-
-```python
-    for col in self.cols:
-        is_num = True
-```
-Для каждой колонки предположим, что она числовая.
-
-```python
-        for row in self.rows:
-            value = row[col].strip()
-```
-Для каждой строки берём значение колонки. `.strip()` удаляет пробелы по краям.
-
-```python
-            if value == "":
-                continue
-```
-Если ячейка пуста, пропускаем её (пустые ячейки допустимы).
-
-```python
-            if not self.is_number(value):
-                is_num = False
-                break
-```
-Если значение не число, помечаем колонку как не-числовую и выходим из внутреннего цикла.
-
-```python
-        if is_num:
-            numeric.append(col)
-```
-Если колонка оказалась числовой, добавляем её в список.
-
-```python
-    return numeric
-```
-Возвращаем список числовых колонок.
-
-```python
-def run(self):
-    numeric = self.numeric_columns()
-```
-Получаем список числовых колонок.
-
-```python
-    print("9. Число строк и числовые колонки")
-    print("Строк:", len(self.rows))
-```
-`len()` — функция для подсчёта длины (количества элементов в списке).
-
-```python
-    print("Числовые колонки:", numeric)
-```
-Выводим найденные числовые колонки.
-
-```python
-    print("Суммы:")
-    for col in numeric:
-        total = 0.0
-```
-Для каждой числовой колонки инициализируем переменную для суммы.
-
-```python
-        for row in self.rows:
-            value = row[col].strip()
-            if value != "":
-                total += float(value)
-```
-Проходим по всем строкам, берём значение, преобразуем в число и добавляем к сумме.
-
-```python
-        print(col, total)
-```
-Выводим название колонки и её сумму.
+Колонка превращается в массив NumPy.
+Потом считается сумма всех чисел.
 
 ---
 
-## Task 10: Статистика для двух числовых колонок
-
-**Цель**: найти минимум, максимум и среднее значение для первых двух числовых колонок.
-
-### Ключевые функции
+## Task 10: min, max, mean
 
 ```python
-def run(self):
-    numeric = self.numeric_columns()
-    if len(numeric) < 2:
-        print("Нужно как минимум две числовые колонки")
-        return
+numeric = self.numeric_columns()
 ```
-Сначала проверяем, есть ли две числовые колонки. Если нет — выходим.
+
+Сначала программа находит числовые колонки.
 
 ```python
-    for col in numeric[:2]:
+for col in numeric[:2]:
 ```
-`[:2]` — это срез списка. Берём первые 2 элемента.
+
+Берутся только первые две числовые колонки.
 
 ```python
-        values = []
-        for row in self.rows:
-            value = row[col].strip()
-            if value != "":
-                values.append(float(value))
+values = self.df[col].astype(float).dropna().to_numpy()
 ```
-Собираем все числовые значения из текущей колонки.
+
+Колонка превращается в числа.
+`dropna()` убирает пустые значения.
+`to_numpy()` делает массив.
 
 ```python
-        mmin = min(values)
-        mmax = max(values)
-        mean = sum(values) / len(values)
+"min": float(np.min(values)),
+"max": float(np.max(values)),
+"mean": round(float(np.mean(values)), 2),
 ```
-`min()` — минимальное значение, `max()` — максимальное, `sum()` — сумма, `len()` — количество.
 
-```python
-        print(col, "min=", mmin, "max=", mmax, "mean=", round(mean, 2))
-```
-`round(mean, 2)` — округляем среднее значение до 2 десятичных знаков.
+Здесь считаются минимум, максимум и среднее значение.
 
 ---
 
-## Task 11: Полное описание данных
-
-**Цель**: вывести первые 5 строк, статистику (среднее и стандартное отклонение) и подсчитать пропуски.
-
-### Ключевые части
+## Task 11: describe и пропуски
 
 ```python
-for row in self.rows[:5]:
-    print(" | ".join(row[col] for col in self.cols))
+self.df = pd.read_csv(file_name)
 ```
-Выводим первые 5 строк. `join()` — объединяет элементы в одну строку через разделитель.
+
+Файл полностью читается через `pandas`.
 
 ```python
-mean = sum(values) / count
-s2 = 0.0
-for v in values:
-    s2 += (v - mean) ** 2
-std = (s2 / count) ** 0.5
+describe = self.df.describe().round(2).to_dict()
 ```
-Вычисляем стандартное отклонение. `** 2` — возведение в квадрат, `** 0.5` — извлечение квадратного корня.
+
+`describe()` сразу считает основную статистику:
+
+- `count` — сколько значений
+- `mean` — среднее
+- `std` — разброс
+- `min` — минимум
+- `25%`, `50%`, `75%` — квартильные границы
+- `max` — максимум
 
 ```python
-for col in self.cols:
-    miss = 0
-    for row in self.rows:
-        if row[col].strip() == "":
-            miss += 1
-    print(col, miss)
+missing = self.df.isna().sum().astype(int).to_dict()
 ```
-Подсчитываем пустые ячейки для каждой колонки.
+
+Эта строка считает пропуски по каждой колонке.
+
+Простой аналог:
+
+```python
+missing = {}
+for col in columns:
+    missing[col] = 0
+```
+
+Только `pandas` делает это быстрее и короче.
 
 ---
 
-## Task 12: Топ-5 категорий и квартили
-
-**Цель**: найти 5 самых частых значений в категориальной колонке и границы квартилей.
-
-### Ключевые функции
+## Task 12: топ-5 и квартильные границы
 
 ```python
-def top_categories(self, col):
-    counts = {}
-    for row in self.rows:
-        value = row[col].strip()
-        if value == "":
-            value = "(пусто)"
-        counts[value] = counts.get(value, 0) + 1
+category = self.category_columns()
+numeric = self.numeric_columns()
 ```
-Создаём словарь `counts`. Для каждого уникального значения считаем, сколько раз оно встречается. `get(value, 0)` — если ключа нет, возвращаем 0.
+
+Программа отдельно ищет текстовые и числовые колонки.
 
 ```python
-    pairs = sorted(counts.items(), key=lambda item: item[1], reverse=True)
-    return pairs[:5]
+top = self.df[cat_col].fillna("(empty)").value_counts().head(5)
 ```
-`sorted()` сортирует пары (значение, количество) по количеству в обратном порядке. `lambda` — безымянная функция для сортировки. `[:5]` — берём первые 5.
+
+Эта строка делает топ-5 значений.
+Например, какие города встречаются чаще всего.
 
 ```python
-def quartiles(self, col):
-    values = []
-    for row in self.rows:
-        value = row[col].strip()
-        if value != "":
-            values.append(float(value))
-    values.sort()
+quartiles = self.df[num_col].quantile([0.25, 0.5, 0.75])
 ```
-Собираем числовые значения и сортируем их по возрастанию.
 
-```python
-    q25 = values[int(n * 0.25)]
-    q50 = values[int(n * 0.5)]
-    q75 = values[int(n * 0.75)]
-```
-Берём элементы на 25%, 50% и 75% позициях отсортированного списка. `int()` — преобразует в целое число (индекс).
+Здесь считаются границы квартилей:
+
+- `25%`
+- `50%`
+- `75%`
 
 ---
 
-## Task 13: Генерация графиков
-
-**Цель**: создать три типа графиков: гистограмму, линейный график и диаграмму топ-5 категорий.
-
-### Ключевые функции
+## Task 13: графики
 
 ```python
 import matplotlib.pyplot as plt
 ```
-Импортируем библиотеку для рисования графиков.
+
+Подключается библиотека для рисования графиков.
 
 ```python
-def save_histogram(self, col):
-    values = []
-    for row in self.rows:
-        value = row[col].strip()
-        if value != "":
-            values.append(float(value))
-    plt.figure(figsize=(10, 5))
+plt.hist(values, bins=8, color="orange", edgecolor="black", alpha=0.7)
 ```
-`figsize=(10, 5)` — размер графика (ширина 10, высота 5).
+
+Создаётся гистограмма числовой колонки.
 
 ```python
-    plt.hist(values, bins=8, color="orange", edgecolor="black", alpha=0.7)
+plt.barh(labels, values, color="teal")
 ```
-`hist()` — рисует гистограмму. `bins=8` — делим данные на 8 групп. `color` — цвет, `alpha=0.7` — прозрачность 70%.
+
+Создаётся горизонтальный bar-график для топ-5 категорий.
 
 ```python
-    plt.title("Гистограмма " + col)
-    plt.xlabel(col)
-    plt.ylabel("Число строк")
+plt.savefig(self.chart_path("histogram.png"))
 ```
-Заголовок графика, подписи осей.
 
-```python
-    plt.savefig("histogram.png")
-    plt.close()
-```
-`savefig()` — сохраняет график в файл. `close()` — закрывает объект графика, освобождая память.
+График сохраняется в PNG-файл.
 
-```python
-def save_line_plot(self, col):
-    plt.plot(values, marker="o", linestyle="-", color="purple")
-```
-`plot()` — линейный график. `marker="o"` — точки на линии, `linestyle="-"` — полная линия.
+После запуска `task13.py` появляются:
 
-```python
-def save_top_categories(self, col):
-    plt.barh(labels, values, color="teal")
-```
-`barh()` — горизонтальная столбчатая диаграмма (стоящие столбцы).
-
-```python
-    for index, value in enumerate(values):
-        plt.text(value + 0.1, index, str(value), va="center")
-```
-`enumerate()` — даёт индекс и значение одновременно. `text()` — добавляет текстовую подпись к графику.
+- `histogram.png`
+- `top_categories.png`
 
 ---
 
-## Task 14: HTTP API для отчёта
+## Task 14: JSON-отчёт
 
-**Цель**: запустить простой HTTP-сервер, который на запрос `/report` возвращает JSON с анализом данных.
-
-### Импорты
-
-```python
-from http.server import BaseHTTPRequestHandler, HTTPServer
-```
-Модуль для создания HTTP-сервера.
+`task14.py` не запускает FastAPI.
+Он только готовит данные для отчёта.
 
 ```python
-from urllib.parse import parse_qs, unquote, urlparse
+import pandas as pd
 ```
-Функции для парсинга URL и параметров запроса.
 
-### Класс Task14
+Подключается `pandas`.
+Он нужен, чтобы читать CSV и считать статистику.
 
 ```python
-def missing_counts(self):
-    result = {}
-    for col in self.cols:
-        miss = 0
-        for row in self.rows:
-            if row[col].strip() == "":
-                miss += 1
-        result[col] = miss
-    return result
+class Task14:
 ```
-Подсчитываем пустые ячейки для каждой колонки.
+
+Создаётся класс задания 14.
+Класс нужен, чтобы весь код задания был в одном месте.
 
 ```python
-def describe_columns(self, cols):
-    result = {}
-    for col in cols:
-        values = [...]
-        result[col] = {
-            "count": len(values),
-            "mean": sum(values) / len(values),
-            "min": values[0],
-            "25%": values[int(len(values) * 0.25)],
-            "max": values[-1],
-        }
-    return result
+def __init__(self, file_name="data.csv"):
+    self.file_name = file_name
+    self.df = pd.read_csv(file_name)
 ```
-Возвращаем словарь со статистикой по числовым колонкам в виде JSON.
 
-### Класс Handler
+Когда создаётся `Task14`, программа:
+
+1. запоминает имя файла
+2. читает CSV
+3. сохраняет таблицу в `self.df`
 
 ```python
-class Handler(BaseHTTPRequestHandler):
-    def do_GET(self):
+def numeric_columns(self):
+    return self.df.select_dtypes(include="number").columns.tolist()
 ```
-Метод вызывается, когда приходит GET-запрос.
+
+Метод возвращает список числовых колонок.
 
 ```python
-    parsed = urlparse(self.path)
-    if parsed.path != "/report":
-        self.send_response(404)
-        return
+def category_columns(self):
+    return self.df.select_dtypes(exclude="number").columns.tolist()
 ```
-Проверяем путь в URL. Если не `/report`, отправляем ошибку 404.
+
+Метод возвращает список текстовых колонок.
 
 ```python
-    params = parse_qs(parsed.query)
-    file_name = params.get("file", [""])[0]
-    cols = params.get("cols", [""])[0].split(",")
-    cat = params.get("cat", [""])[0]
+selected = [col for col in columns if col in self.df.columns]
 ```
-Извлекаем параметры из URL:
-- `file` — имя файла
-- `cols` — колонки для анализа (через запятую)
-- `cat` — категориальная колонка
+
+Здесь программа оставляет только те колонки, которые реально есть в таблице.
+Это защита от неправильного имени колонки.
 
 ```python
-    self.send_response(200)
-    self.send_header("Content-Type", "application/json")
-    self.end_headers()
-    data = json.dumps(report, ensure_ascii=False)
-    self.wfile.write(data.encode("utf-8"))
+describe = self.df[selected].describe().round(2).to_dict()
 ```
-Отправляем успешный ответ (200) с заголовком `Content-Type: application/json` и данными в виде JSON.
 
-### Запуск сервера
+Считается статистика для выбранных колонок.
+Потом результат округляется и превращается в словарь.
 
 ```python
-def run_server():
-    server = HTTPServer(("127.0.0.1", 8000), Handler)
-    server.serve_forever()
-```
-Создаём сервер на localhost порт 8000 и запускаем его.
-
----
-
-## Как запустить
-
-### Task 9–12 (консольный вывод)
-```bash
-python task9.py
-python task10.py
-python task11.py
-python task12.py
+top = self.df[col].fillna("(empty)").value_counts().head(5)
 ```
 
-### Task 13 (генерация графиков)
-```bash
-python task13.py
-```
-Создаст файлы: `histogram.png`, `line_plot.png`, `top_categories.png`
+Считается топ-5 значений в категориальной колонке.
 
-### Task 14 (HTTP-сервер)
-
-1. Запустите сервер в одном терминале:
-```bash
-python task14.py
-```
-Вы увидите: `Запуск сервера http://127.0.0.1:8000/report?...`
-
-2. Откройте другой терминал и сделайте запрос, или откройте в браузере:
-
-**Примеры запросов:**
-
-Анализ колонок `age` и `score` (числовые):
-```
-http://127.0.0.1:8000/report?file=data.csv&cols=age,score&cat=group
+```python
+def run(self, col1="", col2="", cat=""):
 ```
 
-Анализ колонок `id` и `age` с категорией `city`:
-```
-http://127.0.0.1:8000/report?file=data.csv&cols=id,age&cat=city
-```
+Это главный метод задания 14.
+Он собирает весь отчёт.
 
-**Параметры URL:**
-- `file` — имя CSV-файла (обязательно)
-- `cols` — две колонки для анализа через запятую (обязательно)
-- `cat` — категориальная колонка (опционально)
-
-**Выход (JSON):**
-```json
-{
-  "n_rows": 100,
-  "missing": {"age": 2, "score": 0, ...},
-  "describe": {
-    "age": {"count": 98, "mean": 35.5, "min": 18, "25%": 25, "50%": 35, "75%": 45, "max": 65},
-    "score": {"count": 100, "mean": 75.2, ...}
-  },
-  "top_categories": [["group_A", 30], ["group_B", 25], ...]
+```python
+return {
+    "file": self.file_name,
+    "n_rows": int(len(self.df)),
+    "describe": self.describe_columns(selected_numeric[:2]),
+    "top_categories": self.top_categories(selected_cat),
 }
 ```
 
-**Остановить сервер:** нажмите `Ctrl+C` в терминале
+Метод возвращает словарь.
+FastAPI потом показывает этот словарь как JSON.
 
 ---
 
-## Требования
+## FastAPI-файл
 
-- Python 3.7+
-- `matplotlib` (для Task 13)
+Файл называется:
 
-Установка: `pip install matplotlib`
+```text
+22. Мини-отчёт по таблице.py
+```
+
+В нём находится сервер.
+
+```python
+from fastapi import FastAPI, Query
+```
+
+`FastAPI` создаёт сервер.
+`Query` помогает получать параметры из URL.
+
+```python
+from task14 import Task14
+```
+
+Так FastAPI получает доступ к заданию 14.
+
+```python
+app = FastAPI(title="Mini table report")
+```
+
+Создаётся приложение FastAPI.
+
+```python
+@app.get("/task14")
+```
+
+Эта строка создаёт адрес:
+
+```text
+/task14
+```
+
+```python
+def task14(file: str = Query("data.csv"), col1: str = Query(""), col2: str = Query(""), cat: str = Query("")):
+```
+
+Функция получает параметры из URL:
+
+- `file` — имя CSV-файла
+- `col1` — первая числовая колонка
+- `col2` — вторая числовая колонка
+- `cat` — категориальная колонка
+
+```python
+return Task14(file).run(col1, col2, cat)
+```
+
+Создаётся объект `Task14`.
+Потом запускается метод `run()`.
+Результат возвращается в браузер как JSON.
+
+```python
+@app.get("/mini-report")
+```
+
+Это общий отчёт.
+Он запускает задания 9-14 вместе.
+
+```python
+uvicorn.run(app, host="127.0.0.1", port=8001)
+```
+
+Эта строка запускает сервер.
+После неё можно открыть:
+
+```text
+http://127.0.0.1:8001/docs
+```
+
+---
+
+## Общий принцип работы
+
+1. Пользователь открывает адрес в браузере.
+2. FastAPI получает параметры из URL.
+3. Нужный класс читает `data.csv`.
+4. Программа считает статистику.
+5. FastAPI возвращает результат как JSON.
+
